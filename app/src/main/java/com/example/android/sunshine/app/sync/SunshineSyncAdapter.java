@@ -58,11 +58,11 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter {
             "com.example.android.sunshine.app.ACTION_DATA_UPDATED";
     // Interval at which to sync with the weather, in seconds.
     // 60 seconds (1 minute) * 180 = 3 hours
-    public static final int SYNC_INTERVAL = 60 * 180;
+//    public static final int SYNC_INTERVAL = 60 * 180;
+    public static final int SYNC_INTERVAL = 60; // every 60 sec
     public static final int SYNC_FLEXTIME = SYNC_INTERVAL/3;
     private static final long DAY_IN_MILLIS = 1000 * 60 * 60 * 24;
     private static final int WEATHER_NOTIFICATION_ID = 3004;
-
 
     private static final String[] NOTIFY_WEATHER_PROJECTION = new String[] {
             WeatherContract.WeatherEntry.COLUMN_WEATHER_ID,
@@ -87,13 +87,14 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter {
     public static final int LOCATION_STATUS_UNKNOWN = 3;
     public static final int LOCATION_STATUS_INVALID = 4;
 
+
     public SunshineSyncAdapter(Context context, boolean autoInitialize) {
         super(context, autoInitialize);
     }
 
     @Override
     public void onPerformSync(Account account, Bundle extras, String authority, ContentProviderClient provider, SyncResult syncResult) {
-        Log.d(LOG_TAG, "Starting sync");
+        Log.i(LOG_TAG, "Starting sync");
 
         // We no longer need just the location String, but also potentially the latitude and
         // longitude, in case we are syncing based on a new Place Picker API result.
@@ -364,13 +365,14 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter {
                 // delete old data so we don't build up an endless history
                 getContext().getContentResolver().delete(WeatherContract.WeatherEntry.CONTENT_URI,
                         WeatherContract.WeatherEntry.COLUMN_DATE + " <= ?",
-                        new String[] {Long.toString(dayTime.setJulianDay(julianStartDay-1))});
+                        new String[]{Long.toString(dayTime.setJulianDay(julianStartDay - 1))});
 
                 updateWidgets();
                 updateMuzei();
                 notifyWeather();
+                updateWearable();
             }
-            Log.d(LOG_TAG, "Sync Complete. " + cVVector.size() + " Inserted");
+            Log.i(LOG_TAG, "Sync Complete. " + cVVector.size() + " inserted");
             setLocationStatus(getContext(), LOCATION_STATUS_OK);
 
         } catch (JSONException e) {
@@ -505,6 +507,28 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter {
         }
     }
 
+    private int count;
+
+    private void updateWearable() {
+        String locationQuery = Utility.getPreferredLocation(getContext());
+        Uri weatherUri = WeatherContract.WeatherEntry.buildWeatherLocationWithDate(locationQuery, System.currentTimeMillis());
+        Cursor cursor = getContext().getContentResolver().query(weatherUri, NOTIFY_WEATHER_PROJECTION, null, null, null);
+
+        Log.i(LOG_TAG, "trying to update wearable");
+        if (cursor.moveToFirst()) {
+            int weatherId = cursor.getInt(INDEX_WEATHER_ID);
+            double high = cursor.getDouble(INDEX_MAX_TEMP);
+            String highTemp = Utility.formatTemperature(getContext(), high);
+            double low = cursor.getDouble(INDEX_MIN_TEMP);
+            String lowTemp = Utility.formatTemperature(getContext(), low);
+
+            lowTemp += "(" + ++count + ")";
+            WearableUpdater wearableUpdater = new WearableUpdater(getContext());
+            Log.i(LOG_TAG, "updating wearable: lowTemp = " + lowTemp);
+            wearableUpdater.updateWearable(weatherId, highTemp, lowTemp);
+        }
+    }
+
     /**
      * Helper method to handle insertion of a new location in the weather database.
      *
@@ -559,6 +583,7 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter {
      * Helper method to schedule the sync adapter periodic execution
      */
     public static void configurePeriodicSync(Context context, int syncInterval, int flexTime) {
+        Log.i(SunshineSyncAdapter.class.getSimpleName(), "configuring periodic sync: syncInterval=" + syncInterval + ", flexTime=" + flexTime);
         Account account = getSyncAccount(context);
         String authority = context.getString(R.string.content_authority);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {

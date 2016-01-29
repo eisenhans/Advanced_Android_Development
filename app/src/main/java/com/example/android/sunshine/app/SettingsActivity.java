@@ -29,6 +29,7 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
+
 import com.example.android.sunshine.app.data.WeatherContract;
 import com.example.android.sunshine.app.sync.SunshineSyncAdapter;
 import com.google.android.gms.location.places.Place;
@@ -45,6 +46,8 @@ import com.google.android.gms.maps.model.LatLng;
  */
 public class SettingsActivity extends PreferenceActivity
         implements Preference.OnPreferenceChangeListener, SharedPreferences.OnSharedPreferenceChangeListener {
+
+    private static final String LOG_TAG = SettingsActivity.class.getName();
     protected final static int PLACE_PICKER_REQUEST = 9090;
     private ImageView mAttribution;
 
@@ -146,6 +149,8 @@ public class SettingsActivity extends PreferenceActivity
     @Override
     public boolean onPreferenceChange(Preference preference, Object value) {
         setPreferenceSummary(preference, value);
+        Log.i(LOG_TAG, "a preference has changed, performing sync");
+        SunshineSyncAdapter.syncImmediately(this);
         return true;
     }
 

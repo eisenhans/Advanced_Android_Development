@@ -274,8 +274,7 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
         // http://developer.android.com/guide/components/intents-common.html#Maps
         if (null != mForecastAdapter) {
             Cursor c = mForecastAdapter.getCursor();
-            if (null != c) {
-                c.moveToPosition(0);
+            if (c != null && c.moveToFirst()) {
                 String posLat = c.getString(COL_COORD_LAT);
                 String posLong = c.getString(COL_COORD_LONG);
                 Uri geoLocation = Uri.parse("geo:" + posLat + "," + posLong);
