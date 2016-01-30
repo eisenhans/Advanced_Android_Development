@@ -59,7 +59,7 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter {
     // Interval at which to sync with the weather, in seconds.
     // 60 seconds (1 minute) * 180 = 3 hours
 //    public static final int SYNC_INTERVAL = 60 * 180;
-    public static final int SYNC_INTERVAL = 60; // every 60 sec
+    public static final int SYNC_INTERVAL = 30;
     public static final int SYNC_FLEXTIME = SYNC_INTERVAL/3;
     private static final long DAY_IN_MILLIS = 1000 * 60 * 60 * 24;
     private static final int WEATHER_NOTIFICATION_ID = 3004;
@@ -518,14 +518,18 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter {
         if (cursor.moveToFirst()) {
             int weatherId = cursor.getInt(INDEX_WEATHER_ID);
             double high = cursor.getDouble(INDEX_MAX_TEMP);
-            String highTemp = Utility.formatTemperature(getContext(), high);
             double low = cursor.getDouble(INDEX_MIN_TEMP);
+            cursor.close();
+
+            String highTemp = Utility.formatTemperature(getContext(), high);
             String lowTemp = Utility.formatTemperature(getContext(), low);
 
             lowTemp += "(" + ++count + ")";
             WearableUpdater wearableUpdater = new WearableUpdater(getContext());
             Log.i(LOG_TAG, "updating wearable: lowTemp = " + lowTemp);
             wearableUpdater.updateWearable(weatherId, highTemp, lowTemp);
+        } else {
+            cursor.close();
         }
     }
 
@@ -607,8 +611,21 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter {
         Bundle bundle = new Bundle();
         bundle.putBoolean(ContentResolver.SYNC_EXTRAS_EXPEDITED, true);
         bundle.putBoolean(ContentResolver.SYNC_EXTRAS_MANUAL, true);
-        ContentResolver.requestSync(getSyncAccount(context),
-                context.getString(R.string.content_authority), bundle);
+
+        Account account = getSyncAccount(context);
+        String authority = context.getString(R.string.content_authority);
+        Log.i(SunshineSyncAdapter.class.getSimpleName(),
+                "requesting sync from contentResolver for account " + account + " and authority " + authority);
+
+        boolean pending = ContentResolver.isSyncPending(account, authority);
+        boolean active = ContentResolver.isSyncActive(account, authority);
+
+        if (pending || active) {
+            String reason = (pending ? "pending" : "active");
+            Log.i(SunshineSyncAdapter.class.getSimpleName(), "cancelling " + reason + " sync so that new sync will run");
+            ContentResolver.cancelSync(account, authority);
+        }
+        ContentResolver.requestSync(account, authority, bundle);
     }
 
     /**

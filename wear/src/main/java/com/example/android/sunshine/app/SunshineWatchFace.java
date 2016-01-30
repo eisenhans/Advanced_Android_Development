@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.example.android.sunshine.wear;
+package com.example.android.sunshine.app;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -333,7 +333,7 @@ public class SunshineWatchFace extends CanvasWatchFaceService {
             canvas.drawText("25°", xMaxTemp, yWeather, mMaxTempTextPaint);
 
             float xMinTemp = xMaxTemp + 80;
-            canvas.drawText("1°", xMinTemp, yWeather, mMinTempTextPaint);
+            canvas.drawText("8°", xMinTemp, yWeather, mMinTempTextPaint);
         }
 
         /**

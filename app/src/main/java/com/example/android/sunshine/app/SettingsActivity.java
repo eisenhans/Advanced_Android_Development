@@ -75,6 +75,8 @@ public class SettingsActivity extends PreferenceActivity
 
             setListFooter(mAttribution);
         }
+        Log.i(LOG_TAG, "performing manual sync");
+        SunshineSyncAdapter.syncImmediately(this);
     }
 
     // Registers a shared preference change listener that gets notified when preferences change

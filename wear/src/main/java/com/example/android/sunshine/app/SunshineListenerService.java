@@ -1,4 +1,4 @@
-package com.example.android.sunshine.wear;
+package com.example.android.sunshine.app;
 
 import android.util.Log;
 
@@ -9,15 +9,19 @@ import com.google.android.gms.wearable.Wearable;
 import com.google.android.gms.wearable.WearableListenerService;
 
 public class SunshineListenerService extends WearableListenerService {
-    private static final String LOG_TAG = SunshineListenerService.class.getName();
+    private static final String LOG_TAG = "SunshineListenerServ";
 
     private GoogleApiClient googleApiClient;
 
     @Override
     public void onCreate() {
         super.onCreate();
+        Log.i(LOG_TAG, "connecting to googleApiClient");
+
         googleApiClient = new GoogleApiClient.Builder(this).addApi(Wearable.API).build();
         googleApiClient.connect();
+
+        Log.i(LOG_TAG, "connecting: " + googleApiClient.isConnecting() + ", connected: " + googleApiClient.isConnected());
     }
 
     @Override
