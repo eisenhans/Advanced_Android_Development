@@ -1,6 +1,7 @@
 package com.example.android.sunshine.app.sync;
 
 import android.content.Context;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
 
@@ -13,6 +14,7 @@ import com.google.android.gms.wearable.Node;
 import com.google.android.gms.wearable.NodeApi;
 import com.google.android.gms.wearable.Wearable;
 
+import java.nio.charset.Charset;
 import java.util.Collection;
 import java.util.HashSet;
 
@@ -20,7 +22,25 @@ public class WearableUpdater implements GoogleApiClient.ConnectionCallbacks, Goo
     private static final String LOG_TAG = WearableUpdater.class.getName();
 
     private GoogleApiClient googleApiClient;
-    private static final String START_ACTIVITY_PATH = "/start-activity";
+    private static final String UPDATE_WEATHER_PATH = "/update-weather";
+    private static final Charset CHARSET = Charset.forName("UTF-8");
+
+    private int weatherId;
+    private String maxTemp;
+    private String minTemp;
+
+    private class UpdateNodesTask extends AsyncTask<Void, Void, Void> {
+
+        @Override
+        protected Void doInBackground(Void... args) {
+            Collection<String> nodes = getNodes();
+            Log.i(LOG_TAG, "updating weather for " + nodes.size() + " nodes");
+            for (String node : nodes) {
+                updateNode(node);
+            }
+            return null;
+        }
+    }
 
     public WearableUpdater(Context context) {
         googleApiClient = new GoogleApiClient.Builder(context)
@@ -31,28 +51,17 @@ public class WearableUpdater implements GoogleApiClient.ConnectionCallbacks, Goo
     }
 
     public void updateWearable(int weatherId, String maxTemp, String minTemp) {
-        Collection<String> nodes = getNodes();
-        Log.i(LOG_TAG, "updating weather for " + nodes.size() + " nodes");
-
-        for (String node : nodes) {
-            updateWearable(node, weatherId, maxTemp, minTemp);
-        }
+        this.weatherId = weatherId;
+        this.maxTemp = maxTemp;
+        this.minTemp = minTemp;
+        googleApiClient.connect();
     }
 
-    private void updateWearable(String node, int weatherId, String maxTemp, String minTemp) {
-        Log.i(LOG_TAG, "updating watch: node=" + node + ", weatherId=" + weatherId + ", maxTemp=" + maxTemp + ", minTemp=" + minTemp);
+    @Override
+    public void onConnected(Bundle bundle) {
+        Log.i(LOG_TAG, "connected: " + bundle);
 
-        PendingResult<MessageApi.SendMessageResult> messageResult =
-                Wearable.MessageApi.sendMessage(googleApiClient, node, START_ACTIVITY_PATH, new byte[0]);
-        messageResult.setResultCallback(
-                new ResultCallback<MessageApi.SendMessageResult>() {
-                    @Override
-                    public void onResult(MessageApi.SendMessageResult sendMessageResult) {
-                        Log.i(LOG_TAG, "Received SendMessageResult: " + sendMessageResult +
-                                " (status: " + sendMessageResult.getStatus() + ")");
-                    }
-                }
-        );
+        new UpdateNodesTask().execute();
     }
 
     private Collection<String> getNodes() {
@@ -62,13 +71,25 @@ public class WearableUpdater implements GoogleApiClient.ConnectionCallbacks, Goo
         for (Node node : nodes.getNodes()) {
             results.add(node.getId());
         }
-
         return results;
     }
 
-    @Override
-    public void onConnected(Bundle bundle) {
-        Log.i(LOG_TAG, "connected: " + bundle);
+    private void updateNode(String node) {
+        Log.i(LOG_TAG, "updating watch: node=" + node + ", weatherId=" + weatherId + ", maxTemp=" + maxTemp + ", minTemp=" + minTemp);
+
+        String dataString = weatherId + "," + maxTemp + "," + minTemp;
+        byte[] data = dataString.getBytes(CHARSET);
+        PendingResult<MessageApi.SendMessageResult> messageResult =
+                Wearable.MessageApi.sendMessage(googleApiClient, node, UPDATE_WEATHER_PATH, data);
+        messageResult.setResultCallback(
+                new ResultCallback<MessageApi.SendMessageResult>() {
+                    @Override
+                    public void onResult(MessageApi.SendMessageResult sendMessageResult) {
+                        Log.i(LOG_TAG, "Received SendMessageResult: " + sendMessageResult +
+                                " (status: " + sendMessageResult.getStatus() + ")");
+                    }
+                }
+        );
     }
 
     @Override
