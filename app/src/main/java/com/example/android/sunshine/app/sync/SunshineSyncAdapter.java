@@ -527,7 +527,7 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter {
             lowTemp += "(" + ++count + ")";
             WearableUpdater wearableUpdater = new WearableUpdater(getContext());
             Log.i(LOG_TAG, "updating wearable: lowTemp = " + lowTemp);
-            wearableUpdater.updateWearable(weatherId, highTemp, lowTemp);
+            wearableUpdater.updateWearable(String.valueOf(weatherId), highTemp, lowTemp);
         } else {
             cursor.close();
         }

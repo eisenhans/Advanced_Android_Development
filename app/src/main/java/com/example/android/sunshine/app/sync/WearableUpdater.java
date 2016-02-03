@@ -25,7 +25,7 @@ public class WearableUpdater implements GoogleApiClient.ConnectionCallbacks, Goo
     private static final String UPDATE_WEATHER_PATH = "/update-weather";
     private static final Charset CHARSET = Charset.forName("UTF-8");
 
-    private int weatherId;
+    private String weatherId;
     private String maxTemp;
     private String minTemp;
 
@@ -50,7 +50,7 @@ public class WearableUpdater implements GoogleApiClient.ConnectionCallbacks, Goo
                 .build();
     }
 
-    public void updateWearable(int weatherId, String maxTemp, String minTemp) {
+    public void updateWearable(String weatherId, String maxTemp, String minTemp) {
         this.weatherId = weatherId;
         this.maxTemp = maxTemp;
         this.minTemp = minTemp;

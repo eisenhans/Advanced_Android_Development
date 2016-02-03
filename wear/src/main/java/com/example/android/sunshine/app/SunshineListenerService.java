@@ -1,5 +1,7 @@
 package com.example.android.sunshine.app;
 
+import android.content.Intent;
+import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -15,11 +17,11 @@ public class SunshineListenerService extends WearableListenerService {
 
     private static final String UPDATE_WEATHER_PATH = "/update-weather";
     private static final Charset CHARSET = Charset.forName("UTF-8");
-//    public static final String WEATHER_CHANGED_INTENT = "weather_changed_intent";
-//    public static final String WEATHER_CHANGED_KEY = "weather_changed_key";
+    public static final String WEATHER_CHANGED_INTENT = "weather_changed_intent";
+    public static final String WEATHER_CHANGED_KEY = "weather_changed_key";
 
     private GoogleApiClient googleApiClient;
-//    private LocalBroadcastManager broadcastManager;
+    private LocalBroadcastManager broadcastManager;
 
     @Override
     public void onCreate() {
@@ -31,7 +33,7 @@ public class SunshineListenerService extends WearableListenerService {
 
         Log.i(LOG_TAG, "connecting: " + googleApiClient.isConnecting() + ", connected: " + googleApiClient.isConnected());
 
-//        broadcastManager = LocalBroadcastManager.getInstance(this);
+        broadcastManager = LocalBroadcastManager.getInstance(this);
     }
 
     @Override
@@ -42,10 +44,10 @@ public class SunshineListenerService extends WearableListenerService {
             String messageContent = new String(data, CHARSET);
             Log.i(LOG_TAG, "message content: " + messageContent);
 
-//            Intent weatherIntent = new Intent(WEATHER_CHANGED_INTENT);
-//            weatherIntent.putExtra(WEATHER_CHANGED_KEY, messageContent);
-//            broadcastManager.sendBroadcast(weatherIntent);
-//            Log.i(LOG_TAG, "sent weather broadcast intent: intent=" + weatherIntent + ", message=" + messageContent);
+            Intent weatherIntent = new Intent(WEATHER_CHANGED_INTENT);
+            weatherIntent.putExtra(WEATHER_CHANGED_KEY, messageContent);
+            broadcastManager.sendBroadcast(weatherIntent);
+            Log.i(LOG_TAG, "sent weather broadcast intent: intent=" + weatherIntent + ", message=" + messageContent);
         }
 
 //        if (messageEvent.getPath().equals(START_ACTIVITY_PATH)) {

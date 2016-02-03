@@ -31,6 +31,7 @@ import android.graphics.Typeface;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.wearable.watchface.CanvasWatchFaceService;
 import android.support.wearable.watchface.WatchFaceStyle;
 import android.text.format.DateFormat;
@@ -65,10 +66,10 @@ public class SunshineWatchFace extends CanvasWatchFaceService {
      */
     private static final int MSG_UPDATE_TIME = 0;
 
-//    private LocalBroadcastManager broadcastManager;
-//    private int weatherId;
-//    private String maxTemp = "";
-//    private String minTemp = "";
+    private LocalBroadcastManager broadcastManager;
+    private int resourceId = R.drawable.art_clear;
+    private String maxTemp = "";
+    private String minTemp = "";
 
     @Override
     public Engine onCreateEngine() {
@@ -119,13 +120,27 @@ public class SunshineWatchFace extends CanvasWatchFaceService {
             }
         };
 
-//        final BroadcastReceiver mWeatherReceiver = new BroadcastReceiver() {
-//            @Override
-//            public void onReceive(Context context, Intent intent) {
-//                Log.i(LOG_TAG, "received weather data: " + intent);
-//                invalidate();
-//            }
-//        };
+        final BroadcastReceiver mWeatherReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                Log.i(LOG_TAG, "received weather intent: " + intent);
+                String data = intent.getStringExtra(SunshineListenerService.WEATHER_CHANGED_KEY);
+                Log.i(LOG_TAG, "weather data: " + data);
+                if (data == null || data.length() == 0) {
+                    return;
+                }
+                String[] values = data.split(",");
+                if (values.length < 3) {
+                    return;
+                }
+                int weatherId = Integer.valueOf(values[0]);
+                resourceId = WatchUtility.getArtResourceForWeatherCondition(weatherId);
+                maxTemp = values[1];
+                minTemp = values[2];
+                Log.i(LOG_TAG, "updated weather: maxTemp=" + maxTemp + ", minTemp=" + minTemp);
+                invalidate();
+            }
+        };
 
         int mTapCount;
 
@@ -178,7 +193,7 @@ public class SunshineWatchFace extends CanvasWatchFaceService {
             mDate = new Date();
             initFormats();
 
-//            broadcastManager = LocalBroadcastManager.getInstance(getApplicationContext());
+            broadcastManager = LocalBroadcastManager.getInstance(getApplicationContext());
         }
 
         @Override
@@ -229,9 +244,9 @@ public class SunshineWatchFace extends CanvasWatchFaceService {
             IntentFilter timeZoneFilter = new IntentFilter(Intent.ACTION_TIMEZONE_CHANGED);
             SunshineWatchFace.this.registerReceiver(mTimeZoneReceiver, timeZoneFilter);
 
-//            IntentFilter weatherFilter = new IntentFilter(SunshineListenerService.WEATHER_CHANGED_INTENT);
-//            broadcastManager.registerReceiver(mWeatherReceiver, weatherFilter);
-//            Log.i(LOG_TAG, "registered weather broadcast receiver");
+            IntentFilter weatherFilter = new IntentFilter(SunshineListenerService.WEATHER_CHANGED_INTENT);
+            broadcastManager.registerReceiver(mWeatherReceiver, weatherFilter);
+            Log.i(LOG_TAG, "registered weather broadcast receiver");
         }
 
         private void unregisterReceivers() {
@@ -240,7 +255,8 @@ public class SunshineWatchFace extends CanvasWatchFaceService {
             }
             mRegisteredReceivers = false;
             SunshineWatchFace.this.unregisterReceiver(mTimeZoneReceiver);
-//            broadcastManager.unregisterReceiver(mWeatherReceiver);
+            broadcastManager.unregisterReceiver(mWeatherReceiver);
+            Log.i(LOG_TAG, "unregistered receivers");
         }
 
         @Override
@@ -341,20 +357,20 @@ public class SunshineWatchFace extends CanvasWatchFaceService {
             canvas.drawText(time, mXOffset, mYOffset, mTimeTextPaint);
             canvas.drawText(day, mXOffset, mYOffset + mLineHeight, mDateTextPaint);
 
-            float yDivider = mYOffset + 2 * mLineHeight;
+            float yDivider = mYOffset + 1 * mLineHeight;
             canvas.drawLine(mXDividerStart, yDivider, mXDividerEnd, yDivider, mDateTextPaint);
 
-            float yWeather = mYOffset + 4 * mLineHeight;
+            float yWeather = mYOffset + 2 * mLineHeight;
             float xWeatherIcon = mXOffset + 70;
 
-            Bitmap bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.art_light_rain);
+            Bitmap bitmap = BitmapFactory.decodeResource(getResources(), resourceId);
             canvas.drawBitmap(bitmap, xWeatherIcon, yWeather, mBackgroundPaint);
 
             float xMaxTemp = xWeatherIcon + 70;
-            canvas.drawText("30°", xMaxTemp, yWeather, mMaxTempTextPaint);
+            canvas.drawText(maxTemp, xMaxTemp, yWeather, mMaxTempTextPaint);
 
             float xMinTemp = xMaxTemp + 80;
-            canvas.drawText("9°", xMinTemp, yWeather, mMinTempTextPaint);
+            canvas.drawText(minTemp, xMinTemp, yWeather, mMinTempTextPaint);
         }
 
         /**
