@@ -151,8 +151,9 @@ public class SettingsActivity extends PreferenceActivity
     @Override
     public boolean onPreferenceChange(Preference preference, Object value) {
         setPreferenceSummary(preference, value);
-        Log.i(LOG_TAG, "a preference has changed, performing sync");
-        SunshineSyncAdapter.syncImmediately(this);
+        // uncomment the following two lines to test the watch face synchronization
+//        Log.i(LOG_TAG, "a preference has changed, performing sync");
+//        SunshineSyncAdapter.syncImmediately(this);
         return true;
     }
 

@@ -349,7 +349,7 @@ public class SunshineWatchFace extends CanvasWatchFaceService {
             int width = bounds.width();
             int height = bounds.height();
 
-            float xTime = width * 0.25f;
+            float xTime = width * 0.2f;
             float yTime = height * 0.3f;
             canvas.drawText(watchData.time, xTime, yTime, mTimeTextPaint);
 
