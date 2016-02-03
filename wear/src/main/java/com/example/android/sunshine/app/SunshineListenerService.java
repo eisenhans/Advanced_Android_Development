@@ -42,19 +42,12 @@ public class SunshineListenerService extends WearableListenerService {
         if (event.getPath().equals(UPDATE_WEATHER_PATH)) {
             byte[] data = event.getData();
             String messageContent = new String(data, CHARSET);
-            Log.i(LOG_TAG, "message content: " + messageContent);
 
             Intent weatherIntent = new Intent(WEATHER_CHANGED_INTENT);
             weatherIntent.putExtra(WEATHER_CHANGED_KEY, messageContent);
             broadcastManager.sendBroadcast(weatherIntent);
             Log.i(LOG_TAG, "sent weather broadcast intent: intent=" + weatherIntent + ", message=" + messageContent);
         }
-
-//        if (messageEvent.getPath().equals(START_ACTIVITY_PATH)) {
-//            Intent startIntent = new Intent(this, MainActivity.class);
-//            startIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-//            startActivity(startIntent);
-//        }
     }
 
     @Override

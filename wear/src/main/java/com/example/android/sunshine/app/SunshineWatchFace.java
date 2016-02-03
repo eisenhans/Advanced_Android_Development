@@ -169,10 +169,6 @@ public class SunshineWatchFace extends CanvasWatchFaceService {
                     .setAcceptsTapEvents(true)
                     .build());
             Resources resources = SunshineWatchFace.this.getResources();
-            mLineHeight = resources.getDimension(R.dimen.digital_line_height);
-            mYOffset = resources.getDimension(R.dimen.digital_y_offset);
-            mXDividerStart = resources.getDimension(R.dimen.digital_x_divider_start);
-            mXDividerEnd = resources.getDimension(R.dimen.digital_x_divider_end);
 
             mBackgroundPaint = new Paint();
             mBackgroundPaint.setColor(resources.getColor(R.color.background));
@@ -266,8 +262,6 @@ public class SunshineWatchFace extends CanvasWatchFaceService {
             // Load resources that have alternate values for round watches.
             Resources resources = SunshineWatchFace.this.getResources();
             boolean isRound = insets.isRound();
-            mXOffset = resources.getDimension(isRound
-                    ? R.dimen.digital_x_offset_round : R.dimen.digital_x_offset);
 
             float timeTextSize = resources.getDimension(isRound
                     ? R.dimen.time_text_size_round : R.dimen.time_text_size);
@@ -345,32 +339,47 @@ public class SunshineWatchFace extends CanvasWatchFaceService {
                 canvas.drawRect(0, 0, bounds.width(), bounds.height(), mBackgroundPaint);
             }
 
-            long now = System.currentTimeMillis();
-            mCalendar.setTimeInMillis(now);
-            mDate.setTime(now);
-            int hourOfDay = mCalendar.get(Calendar.HOUR_OF_DAY);
-            int minute = mCalendar.get(Calendar.MINUTE);
-            String dayOfWeek = mDayOfWeekFormat.format(mDate);
-            String date = mDateFormat.format(mDate);
-            String day = dayOfWeek + " " + date;
-            String time = String.format("%d:%02d", hourOfDay, minute);
-            canvas.drawText(time, mXOffset, mYOffset, mTimeTextPaint);
-            canvas.drawText(day, mXOffset, mYOffset + mLineHeight, mDateTextPaint);
+            drawDateAndTime(canvas, bounds);
+            drawDivider(canvas, bounds);
+            drawWeather(canvas, bounds);
+        }
 
-            float yDivider = mYOffset + 1 * mLineHeight;
-            canvas.drawLine(mXDividerStart, yDivider, mXDividerEnd, yDivider, mDateTextPaint);
+        private void drawDateAndTime(Canvas canvas, Rect bounds) {
+            WatchData watchData = new WatchData();
+            int width = bounds.width();
+            int height = bounds.height();
 
-            float yWeather = mYOffset + 2 * mLineHeight;
-            float xWeatherIcon = mXOffset + 70;
+            float xTime = width * 0.25f;
+            float yTime = height * 0.3f;
+            canvas.drawText(watchData.time, xTime, yTime, mTimeTextPaint);
 
-            Bitmap bitmap = BitmapFactory.decodeResource(getResources(), resourceId);
-            canvas.drawBitmap(bitmap, xWeatherIcon, yWeather, mBackgroundPaint);
+            float xDate = width * 0.1f;
+            float yDate = height * 0.45f;
+            canvas.drawText(watchData.date, xDate, yDate, mDateTextPaint);
+        }
 
-            float xMaxTemp = xWeatherIcon + 70;
-            canvas.drawText(maxTemp, xMaxTemp, yWeather, mMaxTempTextPaint);
+        private void drawDivider(Canvas canvas, Rect bounds) {
+            float y = bounds.height() * 0.5f;
+            float width = bounds.width() * 0.25f;
+            float startX = bounds.width() * 0.375f;
+            canvas.drawLine(startX, y, startX + width, y, mDateTextPaint);
+        }
 
-            float xMinTemp = xMaxTemp + 80;
-            canvas.drawText(minTemp, xMinTemp, yWeather, mMinTempTextPaint);
+        private void drawWeather(Canvas canvas, Rect bounds) {
+            float xIcon = bounds.width() * 0.05f;
+            float yIcon = bounds.height() * 0.6f;
+
+            if (!isInAmbientMode()) {
+                Bitmap bitmap = BitmapFactory.decodeResource(getResources(), resourceId);
+                canvas.drawBitmap(bitmap, xIcon, yIcon, mBackgroundPaint);
+            }
+
+            float y = bounds.height() * 0.75f;
+            float xMaxTemp = bounds.width() * 0.4f;
+            canvas.drawText(maxTemp, xMaxTemp, y, mMaxTempTextPaint);
+
+            float xMinTemp = bounds.width() * 0.7f;
+            canvas.drawText(minTemp, xMinTemp, y, mMinTempTextPaint);
         }
 
         /**
@@ -404,5 +413,9 @@ public class SunshineWatchFace extends CanvasWatchFaceService {
                 mUpdateTimeHandler.sendEmptyMessageDelayed(MSG_UPDATE_TIME, delayMs);
             }
         }
+    }
+
+    private static void logInfo(String message) {
+        Log.i(LOG_TAG, message);
     }
 }

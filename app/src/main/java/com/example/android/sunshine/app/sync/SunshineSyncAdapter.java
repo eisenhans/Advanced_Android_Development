@@ -507,8 +507,6 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter {
         }
     }
 
-    private int count;
-
     private void updateWearable() {
         String locationQuery = Utility.getPreferredLocation(getContext());
         Uri weatherUri = WeatherContract.WeatherEntry.buildWeatherLocationWithDate(locationQuery, System.currentTimeMillis());
@@ -524,9 +522,8 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter {
             String highTemp = Utility.formatTemperature(getContext(), high);
             String lowTemp = Utility.formatTemperature(getContext(), low);
 
-            lowTemp += "(" + ++count + ")";
             WearableUpdater wearableUpdater = new WearableUpdater(getContext());
-            Log.i(LOG_TAG, "updating wearable: lowTemp = " + lowTemp);
+            Log.i(LOG_TAG, "updating wearable: highTemp = " + highTemp);
             wearableUpdater.updateWearable(String.valueOf(weatherId), highTemp, lowTemp);
         } else {
             cursor.close();
